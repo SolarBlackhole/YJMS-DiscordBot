@@ -6,9 +6,11 @@ import requests
 from config import config as config_main
 
 config = config_main["player"]
+players = {}
 
 def setup():
-    tempDict = {}
+    global players
+    #tempDict = {}
 
     try:
         with open(config["save_location"] + "players.json") as f:
@@ -17,51 +19,61 @@ def setup():
     except IOError as e:
         print("player file not found... Making it now")
         f = open(config["save_location"] + "players.json", "w")
-        f.write('{"players": {}}')
+        f.write('{}')
         f.close()
 
     with open(config["save_location"] + "players.json") as f:
-        tempDict = json.load(f)
+        players = json.load(f)
 
+    save()
     f.close()
 
-    for key in tempDict.keys():
-        config[key] = tempDict[key]
+    
+    ##for key in tempDict.keys():
+    ##    config[key] = tempDict[key]
+    
+
+def save():
+    global players
+    with open(config["save_location"] + "players.json", "w") as f:
+        json.dump(players, f)
+    f.close()
 
 def player_check(player: str):
-    if player in config["players"]:
+    global players
+    print(f"Players: {players}")
+    if player in players:
+        print("Player in players")
         return True
+    print("Player not in players")
     return False
     
 def player_add(player: str, discord_id: discord.member.Member):
+    global players
     info = get_info(player)
     if info is None:
         return False
-    if info["platform"] == "reddit":
-        config["players"][player] = {
-            "discord_account": str(discord_id),
-            "platform": "reddit"
-        }
-    else:
-        config["players"][player] = {
-            "discord_account": str(discord_id),
-            "platform": "discord"
-        }
-    with open(config["save_location"] + "players.json", "w") as f:
-        json.dump(config["players"], f)
-    f.close()
+    players[player] = {
+        "discord_account": str(discord_id),
+        "platform": info["platform"],
+        "stars": info["stars"],
+    }
+    save()
 
 def player_remove(player: str):
-    config["players"].pop(player)
-    with open(config["save_location"] + "players.json", "w") as f:
-        json.dump(config["players"], f)
-    f.close()
+    global players
+    if player not in players:
+        return False
+    del players[player]
+    save()
 
 def player_link(player: str, discord_id: discord.member.Member):
-    config["players"][player]["discord_account"] = str(discord_id)
-    with open(config["save_location"] + "players.json", "w") as f:
-        json.dump(config["players"], f)
-    f.close()
+    global players
+    if player not in players:
+        return False
+    players[player]["discord_account"] = str(discord_id)
+    save()
+    return True
 
     
 
@@ -101,3 +113,33 @@ def api_check():
     if not information:
         return False
     return True
+
+def player_not_found():
+    if api_check():
+        embed = discord.Embed(
+            title="Player not found",
+            description="Please check the player name and try again.",
+            color=discord.Color.red(),
+        )
+        return embed
+    else:
+        embed = discord.Embed(
+            title="API Error",
+            description="The API is currently down. Please try again later.",
+            color=discord.Color.red(),
+        )
+        return embed
+
+def is_linked(player: str):
+    global players
+    if player not in players:
+        return False
+    if players[player]["discord_account"] is None:
+        return False
+    return True
+
+def get_linked(player: str):
+    global players
+    if player not in players:
+        return None
+    return players[player]["discord_account"]

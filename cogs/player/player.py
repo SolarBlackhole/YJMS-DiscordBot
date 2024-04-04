@@ -25,20 +25,7 @@ class playerSetup(commands.GroupCog, name="player"):
         player_name = player_helper.search_player(player_name)
         info = player_helper.get_info(player_name)
         if not info:
-            if player_helper.api_check():
-                embed = discord.Embed(
-                    title="Player not found",
-                    description="Please check the player name and try again.",
-                    color=discord.Color.red(),
-                )
-                await interaction.response.send_message(embed=embed)
-            else:
-                embed = discord.Embed(
-                    title="API Error",
-                    description="The API is currently down. Please try again later.",
-                    color=discord.Color.red(),
-                )
-                await interaction.response.send_message(embed=embed)
+            await interaction.response.send_message(embed=player_helper.player_not_found())
             return
         embed = discord.Embed(
             title=f"Info for {player_name}",
@@ -57,14 +44,24 @@ class playerSetup(commands.GroupCog, name="player"):
                     discord_name: discord.member.Member = None,
     ):
         if player_helper.player_check(player_name):
-            await interaction.response.send_message("Player already in database")
+            if player_helper.is_linked(player_name):
+                embed = discord.Embed(
+                    title="Player already in database",
+                    description=f"{player_name} is already in the database and is linked to discord user {player_helper.get_linked(player_name)}",
+                    color=discord.Color.red(),
+                )
+                await interaction.response.send_message(embed=embed)
+                return
+            embed = discord.Embed(
+                title="Player already in database",
+                description=f"{player_name} is already in the database. If you would like to link a discord account to this player, use the link command.",
+                color=discord.Color.red(),
+            )
+            await interaction.response.send_message(embed=embed)
             return
         info = player_helper.get_info(player_name)
         if not info:
-            if player_helper.api_check():
-                await interaction.response.send_message("Player not found")
-            else:
-                await interaction.response.send_message("API is down")
+            await interaction.response.send_message(embed=player_helper.player_not_found())
             return
         player_helper.player_add(player_name, discord_name)
         await interaction.response.send_message("Player added to database")
@@ -75,14 +72,18 @@ class playerSetup(commands.GroupCog, name="player"):
     )
     async def remove(self, 
                     interaction: discord.Interaction, 
-                    reddit_name: str,
+                    player_name: str,
     ):
-        reddit_name = reddit_name.lower()
-        if not player_helper.player_check(reddit_name):
-            await interaction.response.send_message("Player not in database")
+        success = player_helper.player_remove(player_name)
+        if not success:
+            await interaction.response.send_message(embed=player_helper.player_not_found())
             return
-        player_helper.player_remove(reddit_name)
-        await interaction.response.send_message("Player removed from database")
+        embed = discord.Embed(
+            title="Player removed",
+            description=f"{player_name} has been removed from the database",
+            color=discord.Color.green(),
+        )
+        await interaction.response.send_message(embed=embed)
 
     @app_commands.command(
         name="link",
@@ -90,15 +91,20 @@ class playerSetup(commands.GroupCog, name="player"):
     )
     async def link(self,
                     interaction: discord.Interaction,
-                    reddit_name: str,
+                    player_name: str,
                     discord_name: discord.member.Member,
     ):
-        reddit_name = reddit_name.lower()
-        if not player_helper.player_check(reddit_name):
-            await interaction.response.send_message("Player not in database")
+        Success = player_helper.player_link(player_name, discord_name)
+        print(f"Success: {Success}")
+        if not Success:
+            await interaction.response.send_message(embed=player_helper.player_not_found())
             return
-        player_helper.player_link(reddit_name, discord_name)
-        await interaction.response.send_message("Player linked to discord account")
+        embed = discord.Embed(
+            title="Player linked",
+            description=f"{player_name} has been linked to {discord_name}",
+            color=discord.Color.green(),
+        )
+        await interaction.response.send_message(embed=embed)
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(playerSetup(bot))
