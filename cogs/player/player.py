@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+import datetime
 
 import cogs.player.player_helper as player_helper
 
@@ -29,8 +30,9 @@ class playerSetup(commands.GroupCog, name="player"):
             return
         embed = discord.Embed(
             title=f"Info for {player_name}",
-            description=f"Stars: {info['stars']}\nTotal Turns: {info['totalTurns']}\nGame Turns: {info['gameTurns']}\nMVPs: {info['mvps']}\nStreak: {info['streak']}\nPlatform: {info['platform']}",
+            description=f"Stars: {info['stars']}\nTotal Turns: {info['totalTurns']}\nGame Turns: {info['gameTurns']}\nMVPs: {info['mvps']}\nStreak: {info['streak']}\nPlatform: {info['platform']}\nDiscord Account: {info['discord_account']}",
             color=discord.Color.blue(),
+            timestamp=datetime.datetime.now(),
         )
         await interaction.response.send_message(embed=embed)
 
@@ -49,6 +51,7 @@ class playerSetup(commands.GroupCog, name="player"):
                     title="Player already in database",
                     description=f"{player_name} is already in the database and is linked to discord user {player_helper.get_linked(player_name)}",
                     color=discord.Color.red(),
+                    timestamp=datetime.datetime.now(),
                 )
                 await interaction.response.send_message(embed=embed)
                 return
@@ -64,7 +67,22 @@ class playerSetup(commands.GroupCog, name="player"):
             await interaction.response.send_message(embed=player_helper.player_not_found())
             return
         player_helper.player_add(player_name, discord_name)
-        await interaction.response.send_message("Player added to database")
+        if discord_name:
+            embed = discord.Embed(
+                title="Player added",
+                description=f"{player_name} has been added to the database and linked to {discord_name}",
+                color=discord.Color.green(),
+                timestamp=datetime.datetime.now(),
+            )
+            await interaction.response.send_message(embed=embed)
+            return
+        embed = discord.Embed(
+            title="Player added",
+            description=f"{player_name} has been added to the database",
+            color=discord.Color.green(),
+            timestamp=datetime.datetime.now(),
+        )
+        await interaction.response.send_message(embed=embed)
 
     @app_commands.command(
         name="remove",
@@ -82,6 +100,7 @@ class playerSetup(commands.GroupCog, name="player"):
             title="Player removed",
             description=f"{player_name} has been removed from the database",
             color=discord.Color.green(),
+            timestamp=datetime.datetime.now(),
         )
         await interaction.response.send_message(embed=embed)
 
@@ -103,6 +122,7 @@ class playerSetup(commands.GroupCog, name="player"):
             title="Player linked",
             description=f"{player_name} has been linked to {discord_name}",
             color=discord.Color.green(),
+            timestamp=datetime.datetime.now(),
         )
         await interaction.response.send_message(embed=embed)
 

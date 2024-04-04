@@ -1,3 +1,4 @@
+import datetime
 import requests
 import discord
 import json
@@ -66,6 +67,7 @@ def player_remove(player: str):
         return False
     del players[player]
     save()
+    return True
 
 def player_link(player: str, discord_id: discord.member.Member):
     global players
@@ -89,6 +91,16 @@ def get_info(player: str):
     mvps = information["ratings"]["mvps"]
     streak = information["ratings"]["streak"]
     platform = information["platform"]
+    if player_check(player):
+        return {
+            "stars": stars,
+            "totalTurns": totalTurns,
+            "gameTurns": gameTurns,
+            "mvps": mvps,
+            "streak": streak,
+            "platform": platform,
+            "discord_account": players[player]["discord_account"],
+        }
     return {
         "stars": stars,
         "totalTurns": totalTurns,
@@ -96,6 +108,7 @@ def get_info(player: str):
         "mvps": mvps,
         "streak": streak,
         "platform": platform,
+        "discord_account": "None Linked",
     }
 
 def search_player(player: str):
@@ -120,6 +133,7 @@ def player_not_found():
             title="Player not found",
             description="Please check the player name and try again.",
             color=discord.Color.red(),
+            timestamp=datetime.datetime.now(),
         )
         return embed
     else:
@@ -127,6 +141,7 @@ def player_not_found():
             title="API Error",
             description="The API is currently down. Please try again later.",
             color=discord.Color.red(),
+            timestamp=datetime.datetime.now(),
         )
         return embed
 
@@ -134,7 +149,7 @@ def is_linked(player: str):
     global players
     if player not in players:
         return False
-    if players[player]["discord_account"] is None:
+    if players[player]["discord_account"] == "None":
         return False
     return True
 
