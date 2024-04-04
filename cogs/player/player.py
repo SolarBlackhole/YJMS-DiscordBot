@@ -20,16 +20,29 @@ class playerSetup(commands.GroupCog, name="player"):
     )
     async def info(self, 
                     interaction: discord.Interaction, 
-                    reddit_name: str,
+                    player_name: str,
     ):
-        reddit_name = reddit_name.lower()
-        info = player_helper.get_info(reddit_name)
+        player_name = player_helper.search_player(player_name)
+        info = player_helper.get_info(player_name)
         if not info:
-            await interaction.response.send_message("Either the player is not found or the API is down")
+            if player_helper.api_check():
+                embed = discord.Embed(
+                    title="Player not found",
+                    description="Please check the player name and try again.",
+                    color=discord.Color.red(),
+                )
+                await interaction.response.send_message(embed=embed)
+            else:
+                embed = discord.Embed(
+                    title="API Error",
+                    description="The API is currently down. Please try again later.",
+                    color=discord.Color.red(),
+                )
+                await interaction.response.send_message(embed=embed)
             return
         embed = discord.Embed(
-            title=f"Info for {reddit_name}",
-            description=f"Stars: {info['stars']}\nTotal Turns: {info['totalTurns']}\nGame Turns: {info['gameTurns']}\nMVPs: {info['mvps']}\nStreak: {info['streak']}",
+            title=f"Info for {player_name}",
+            description=f"Stars: {info['stars']}\nTotal Turns: {info['totalTurns']}\nGame Turns: {info['gameTurns']}\nMVPs: {info['mvps']}\nStreak: {info['streak']}\nPlatform: {info['platform']}",
             color=discord.Color.blue(),
         )
         await interaction.response.send_message(embed=embed)
@@ -40,14 +53,20 @@ class playerSetup(commands.GroupCog, name="player"):
     )
     async def add(self, 
                     interaction: discord.Interaction, 
-                    reddit_name: str,
+                    player_name: str,
                     discord_name: discord.member.Member = None,
     ):
-        reddit_name = reddit_name.lower()
-        if player_helper.player_check(reddit_name):
+        if player_helper.player_check(player_name):
             await interaction.response.send_message("Player already in database")
             return
-        player_helper.player_add(reddit_name, discord_name)
+        info = player_helper.get_info(player_name)
+        if not info:
+            if player_helper.api_check():
+                await interaction.response.send_message("Player not found")
+            else:
+                await interaction.response.send_message("API is down")
+            return
+        player_helper.player_add(player_name, discord_name)
         await interaction.response.send_message("Player added to database")
 
     @app_commands.command(
