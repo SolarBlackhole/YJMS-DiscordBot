@@ -2,7 +2,6 @@ import datetime
 import requests
 import discord
 import json
-import requests
 
 from config import config as config_main
 
@@ -77,9 +76,32 @@ def player_link(player: str, discord_id: discord.member.Member):
     save()
     return True
 
-    
-
 def get_info(player: str):
+    information = requests.get(f"https://collegefootballrisk.com/api/player?player={player}")
+    if not information:
+        return None
+    information = information.json()
+    team = information["team"]["name"]
+    activeTeam = information["active_team"]["name"]
+    stars = information["ratings"]["overall"]
+    platform = information["platform"]
+    if player_check(player):
+        return {
+            "team": team,
+            "activeTeam": activeTeam,
+            "platform": platform,
+            "stars": stars,
+            "discord_account": players[player]["discord_account"],
+        }
+    return {
+        "team": team,
+        "activeTeam": activeTeam,
+        "platform": platform,
+        "stars": stars,
+        "discord_account": "None Linked",
+    }
+
+def get_stars(player: str):
     information = requests.get(f"https://collegefootballrisk.com/api/player?player={player}")
     print(f"Information {information}")
     if not information:
@@ -90,7 +112,6 @@ def get_info(player: str):
     gameTurns = information["ratings"]["gameTurns"]
     mvps = information["ratings"]["mvps"]
     streak = information["ratings"]["streak"]
-    platform = information["platform"]
     if player_check(player):
         return {
             "stars": stars,
@@ -98,8 +119,6 @@ def get_info(player: str):
             "gameTurns": gameTurns,
             "mvps": mvps,
             "streak": streak,
-            "platform": platform,
-            "discord_account": players[player]["discord_account"],
         }
     return {
         "stars": stars,
@@ -107,8 +126,6 @@ def get_info(player: str):
         "gameTurns": gameTurns,
         "mvps": mvps,
         "streak": streak,
-        "platform": platform,
-        "discord_account": "None Linked",
     }
 
 def search_player(player: str):

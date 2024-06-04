@@ -11,4 +11,8 @@ config = {
     "player": {
         "save_location": "cogs/player/json/",
     },
+    "team": {
+        "save_location": "cogs/team/json/",
+        "guilds": "cogs/util/json/util.json",
+    }
 }

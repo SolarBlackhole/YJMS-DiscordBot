@@ -5,7 +5,7 @@ import datetime
 
 import cogs.player.player_helper as player_helper
 
-class playerSetup(commands.GroupCog, name="player"):
+class player(commands.GroupCog, name="player"):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         super().__init__()
@@ -19,8 +19,8 @@ class playerSetup(commands.GroupCog, name="player"):
         name="info",
         description="Get a player's info",
     )
-    async def info(self, 
-                    interaction: discord.Interaction, 
+    async def info(self,
+                    interaction: discord.Interaction,
                     player_name: str,
     ):
         player_name = player_helper.search_player(player_name)
@@ -30,7 +30,30 @@ class playerSetup(commands.GroupCog, name="player"):
             return
         embed = discord.Embed(
             title=f"Info for {player_name}",
-            description=f"Stars: {info['stars']}\nTotal Turns: {info['totalTurns']}\nGame Turns: {info['gameTurns']}\nMVPs: {info['mvps']}\nStreak: {info['streak']}\nPlatform: {info['platform']}\nDiscord Account: {info['discord_account']}",
+            description=f"Team: {info['team']}\nActive Team: {info['activeTeam']}\nPlatform: {info['platform']}\nStars: {info['stars']}\nDiscord Account: {info['discord_account']}",
+            color=discord.Color.blue(),
+            timestamp=datetime.datetime.now(),
+        )
+        await interaction.response.send_message(embed=embed)
+
+
+
+    @app_commands.command(
+        name="stars",
+        description="Get a player's star rating",
+    )
+    async def stars(self, 
+                    interaction: discord.Interaction, 
+                    player_name: str,
+    ):
+        player_name = player_helper.search_player(player_name)
+        info = player_helper.get_stars(player_name)
+        if not info:
+            await interaction.response.send_message(embed=player_helper.player_not_found())
+            return
+        embed = discord.Embed(
+            title=f"Star rating for {player_name}",
+            description=f"Stars: {info['stars']}\nTotal Turns: {info['totalTurns']}\nGame Turns: {info['gameTurns']}\nMVPs: {info['mvps']}\nStreak: {info['streak']}",
             color=discord.Color.blue(),
             timestamp=datetime.datetime.now(),
         )
@@ -127,4 +150,4 @@ class playerSetup(commands.GroupCog, name="player"):
         await interaction.response.send_message(embed=embed)
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(playerSetup(bot))
+    await bot.add_cog(player(bot))
